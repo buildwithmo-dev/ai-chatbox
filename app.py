@@ -25,6 +25,11 @@ try:
     SUPABASE_URL = st.secrets["SUPABASE_URL"]
     SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
     GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
+    st.write({
+    "SUPABASE_URL exists": bool(st.secrets.get("SUPABASE_URL")),
+    "SUPABASE_KEY exists": bool(st.secrets.get("SUPABASE_KEY")),
+    "GROQ_API_KEY exists": bool(st.secrets.get("GROQ_API_KEY")),
+})
 except (KeyError, FileNotFoundError):
     st.error(
         "Missing configuration. Add SUPABASE_URL, SUPABASE_KEY "
