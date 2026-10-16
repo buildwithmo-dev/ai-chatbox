@@ -177,6 +177,7 @@ def show_auth_screen(supabase):
                 use_container_width=True,
             )
 
+        
         if signup_clicked:
             if not email.strip():
                 st.warning("Enter your email address.")
@@ -206,11 +207,12 @@ def show_auth_screen(supabase):
                             "Signup submitted. Check your email for a "
                             "confirmation link, then return here and log in."
                         )
-                    except Exception as exc:
-                        logging.exception("Supabase signup failed")
-                        st.error("Signup failed.")
-                        st.caption(f"Error type: {type(exc).__name__}")
-                        st.code(str(exc))
+
+                except Exception as exc:
+                    logging.exception("Supabase signup failed")
+                    st.error("Signup failed.")
+                    st.caption(f"Error type: {type(exc).__name__}")
+                    st.code(str(exc))
 
 
 
