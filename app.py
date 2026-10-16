@@ -67,6 +67,20 @@ def load_config():
         "GROQ_MODEL": model,
     }
 
+st.write("Secrets diagnostic", {
+    "SUPABASE_URL exists": bool(
+        st.secrets.get("SUPABASE_URL", "")
+    ),
+    "SUPABASE_KEY exists": bool(
+        st.secrets.get("SUPABASE_KEY", "")
+    ),
+    "GROQ_API_KEY exists": bool(
+        st.secrets.get("GROQ_API_KEY", "")
+    ),
+    "GROQ_MODEL exists": bool(
+        st.secrets.get("GROQ_MODEL", "")
+    ),
+})
 
 config = load_config()
 
