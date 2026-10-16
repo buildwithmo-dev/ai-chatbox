@@ -386,13 +386,26 @@ def delete_conversation(conversation_id):
 # 7. GROQ CHAT COMPLETION
 # --------------------------------------------------
 
+
 def generate_ai_response(messages):
-    """Send conversation history to Groq and return the answer."""
+    """Generate an answer using Groq, with built-in web search enabled."""
 
     api_messages = [
         {
             "role": "system",
-            "content": SYSTEM_PROMPT,
+            "content": SYSTEM_PROMPT + """
+
+Web search instructions:
+- For questions about current events, today's date or time,
+  recent developments, current prices, and other changing facts,
+  use the browser search tool when appropriate.
+- For questions that require no current information, answer
+  directly without unnecessary searching.
+- Never claim to have searched the web if you did not.
+- When search results provide sources, include relevant source
+  links or citations in your answer.
+- Distinguish verified information from uncertainty.
+""",
         }
     ]
 
@@ -400,18 +413,18 @@ def generate_ai_response(messages):
         role = message.get("role")
         content = message.get("content")
 
-        # Only send supported conversational roles.
         if role in ("user", "assistant") and isinstance(content, str):
-            api_messages.append(
-                {
-                    "role": role,
-                    "content": content,
-                }
-            )
+            api_messages.append({
+                "role": role,
+                "content": content,
+            })
 
     response = groq.chat.completions.create(
         model=config["GROQ_MODEL"],
         messages=api_messages,
+        tools=[
+            {"type": "browser_search"}
+        ],
         max_tokens=2048,
         temperature=0.7,
     )
