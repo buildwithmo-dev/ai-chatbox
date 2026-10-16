@@ -1,6 +1,6 @@
 
 import streamlit as st
-from groq import Groq, APIError
+from openai import OpenAI, APIError
 
 # -------------------------
 # 1. Page configuration
@@ -12,23 +12,22 @@ st.set_page_config(
 )
 
 st.title("🤖 Groq AI Chatbot")
-st.caption("A conversational AI assistant powered by Groq")
+st.caption("Groq Responses API · Conversation history · Web search")
 
 # -------------------------
-# 2. Configure the LLM
+# 2. Configure the client
 # -------------------------
 try:
-    client = Groq(
-        api_key=st.secrets["GROQ_API_KEY"]
-    )
+    api_key = st.secrets["GROQ_API_KEY"]
 except (KeyError, FileNotFoundError):
-    st.error(
-        "Groq API key is missing. "
-        "Configure GROQ_API_KEY in your Streamlit secrets."
-    )
+    st.error("GROQ_API_KEY is missing from Streamlit secrets.")
     st.stop()
 
-# Keep the model configurable without editing Python code.
+client = OpenAI(
+    api_key=api_key,
+    base_url="https://api.groq.com/openai/v1",
+)
+
 MODEL = st.secrets.get(
     "GROQ_MODEL",
     "openai/gpt-oss-120b",
@@ -36,42 +35,61 @@ MODEL = st.secrets.get(
 
 SYSTEM_PROMPT = """
 You are a helpful AI assistant.
-Answer clearly, accurately, and concisely.
-If you are unsure about a fact, say so.
+
+Answer clearly and accurately.
+Use browser search when current information is needed.
+When using web search, identify relevant sources and provide links
+when available.
+If you are uncertain, say so.
 """
 
 # -------------------------
-# 3. Initialize chat state
+# 3. Initialize session state
 # -------------------------
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+if "last_response_id" not in st.session_state:
+    st.session_state.last_response_id = None
+
 # -------------------------
-# 4. Sidebar controls
+# 4. Sidebar
 # -------------------------
 with st.sidebar:
     st.subheader("Chat settings")
-    st.write(f"Model: `{MODEL}`")
+    st.caption(f"Model: {MODEL}")
 
-    if st.button("Clear conversation"):
+    st.divider()
+    st.subheader("Latest response ID")
+
+    response_id = st.session_state.last_response_id
+
+    if response_id:
+        st.code(response_id, language=None)
+        st.caption(
+            "Identifier for the latest successful API response."
+        )
+    else:
+        st.caption("No response has been generated yet.")
+
+    if st.button("Clear conversation", use_container_width=True):
         st.session_state.messages = []
+        st.session_state.last_response_id = None
         st.rerun()
 
-    st.caption("Start a new conversation at any time.")
-
 # -------------------------
-# 5. Render chat history
+# 5. Render conversation history
 # -------------------------
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
 # -------------------------
-# 6. Handle user input
+# 6. Handle new messages
 # -------------------------
 if prompt := st.chat_input("Ask me anything..."):
 
-    # Display and save the user's message
+    # Save and display the user's message.
     st.session_state.messages.append(
         {"role": "user", "content": prompt}
     )
@@ -79,39 +97,59 @@ if prompt := st.chat_input("Ask me anything..."):
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Construct the context sent to the model
-    api_messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
-        *st.session_state.messages,
+    # Groq currently requires us to send the conversation
+    # history ourselves; previous_response_id is unsupported.
+    api_input = [
+        {
+            "role": message["role"],
+            "content": message["content"],
+        }
+        for message in st.session_state.messages
     ]
 
-    # Ask Groq for a response
     with st.chat_message("assistant"):
         try:
             with st.spinner("Thinking..."):
-                response = client.chat.completions.create(
+                response = client.responses.create(
                     model=MODEL,
-                    messages=api_messages,
-                    temperature=0.7,
-                    max_completion_tokens=1024,
+                    instructions=SYSTEM_PROMPT,
+                    input=api_input,
+                    tools=[
+                        {"type": "browser_search"}
+                    ],
+                    max_output_tokens=1024,
                 )
 
-                answer = response.choices[0].message.content
+                answer = response.output_text
 
                 if not answer:
-                    answer = "The model returned an empty response."
+                    answer = "The model returned no text response."
 
             st.markdown(answer)
 
-            # Save only a successful assistant response
+            # Store the assistant's answer in local session history.
             st.session_state.messages.append(
-                {"role": "assistant", "content": answer}
+                {
+                    "role": "assistant",
+                    "content": answer,
+                }
             )
 
+            # Record the ID returned by the Responses API.
+            st.session_state.last_response_id = response.id
+
         except APIError as error:
+            # Remove the failed user turn so it can be retried.
+            if (
+                st.session_state.messages
+                and st.session_state.messages[-1]["role"] == "user"
+                and st.session_state.messages[-1]["content"] == prompt
+            ):
+                st.session_state.messages.pop()
+
             st.error(
-                "The Groq API request failed. "
-                "Check your model ID, API key, "
-                "rate limits, and account access."
+                "The Groq Responses API request failed. "
+                "Check your API key, model access, "
+                "browser-search support, and rate limits."
             )
-            st.caption(f"API error: {error}")
+            st.caption(str(error))
