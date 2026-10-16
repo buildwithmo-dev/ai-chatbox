@@ -6,12 +6,12 @@ from openai import OpenAI, APIError
 # 1. Page configuration
 # -------------------------
 st.set_page_config(
-    page_title="Groq AI Chatbot",
+    page_title="Nimdea AI Chatbot",
     page_icon="🤖",
     layout="centered",
 )
 
-st.title("🤖 Groq AI Chatbot")
+st.title("🤖 Nimdea AI Chatbot")
 st.caption("Groq Responses API · Conversation history · Web search")
 
 # -------------------------
