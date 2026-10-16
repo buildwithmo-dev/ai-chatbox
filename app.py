@@ -1,8 +1,10 @@
-
+import logging
 import streamlit as st
 from openai import OpenAI, APIError
 from supabase import create_client
 from datetime import datetime, timezone
+
+logging.basicConfig(level=logging.INFO)
 
 # -------------------------
 # 1. Page configuration
@@ -204,13 +206,12 @@ def show_auth_screen(supabase):
                             "Signup submitted. Check your email for a "
                             "confirmation link, then return here and log in."
                         )
+                    except Exception as exc:
+                        logging.exception("Supabase signup failed")
+                        st.error("Signup failed.")
+                        st.caption(f"Error type: {type(exc).__name__}")
+                        st.code(str(exc))
 
-                except Exception:
-                    st.error(
-                        "Signup failed. Check the email address, password "
-                        "requirements, and Supabase Auth settings. "
-                        "If email sending is rate-limited, wait before retrying."
-                    )
 
 
 # -------------------------
