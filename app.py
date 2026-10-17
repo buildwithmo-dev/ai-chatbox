@@ -171,7 +171,7 @@ def remember_session(session):
 # --------------------------------------------------
 
 def render_authentication():
-    st.title("💬 AI Chatbox")
+    st.title("💬 Nimdea AI")
     st.write("Sign in or create an account to start chatting.")
 
     login_tab, signup_tab = st.tabs(["Login", "Create account"])
@@ -436,7 +436,7 @@ Web search instructions:
 # --------------------------------------------------
 
 def render_chat():
-    st.title("💬 AI Chatbox")
+    st.title("💬 Nimdea AI")
 
     with st.sidebar:
         st.write("### Account")
