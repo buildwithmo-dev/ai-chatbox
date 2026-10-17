@@ -9,9 +9,18 @@ from supabase import create_client
 # --------------------------------------------------
 # 1. APP CONFIGURATION
 # --------------------------------------------------
+hide_streamlit = """
+<style>
+div[data-testid="stToolbar"] {visibility: hidden; height: 0;}
+#MainMenu {visibility: hidden;}
+header    {visibility: hidden;}
+footer    {visibility: hidden;}
+</style>
+"""
+st.markdown(hide_streamlit, unsafe_allow_html=True)
 
 st.set_page_config(
-    page_title="AI Chatbox",
+    page_title="Nimdea AI",
     page_icon="💬",
     layout="wide",
 )
