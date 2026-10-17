@@ -12,7 +12,7 @@ from supabase import create_client
 hide_streamlit = """
 <style>
 div[data-testid="stToolbar"] {visibility: hidden; height: 0;}
-#MainMenu {visibility: hidden;}
+
 header    {visibility: hidden;}
 footer    {visibility: hidden;}
 </style>
